@@ -1,7 +1,370 @@
 <!doctype html>
-<html>
-  <head><meta charset="utf-8"><title>Test</title></head>
-  <body style="font-family:Arial; background:#ffe6f0; color:#111; display:grid; place-items:center; height:100vh;">
-    <h1>It works 💖</h1>
-  </body>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Will you be my Valentine?</title>
+
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;700;900&display=swap" rel="stylesheet">
+
+  <style>
+    :root{
+      --bg: #ffe6f0;
+      --text: #111;
+      --card: rgba(255,255,255,0.65);
+      --cardBorder: rgba(0,0,0,0.08);
+      --yes: #24c16a;
+      --no: #ff4d6d;
+    }
+
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background: var(--bg);
+      font-family: "Poppins", sans-serif;
+      color: var(--text);
+      overflow: hidden;
+    }
+
+    /* Hearts layer */
+    .hearts {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      overflow: hidden;
+      z-index: 0;
+    }
+    .heart {
+      position: absolute;
+      bottom: -40px;
+      font-size: 18px;
+      opacity: 0.95;
+      animation: floatUp linear forwards;
+      filter: drop-shadow(0 6px 10px rgba(0,0,0,0.15));
+      user-select: none;
+    }
+    @keyframes floatUp {
+      to {
+        transform: translateY(-120vh) translateX(var(--drift));
+        opacity: 0;
+      }
+    }
+
+    /* Main card */
+    .wrap {
+      position: relative;
+      z-index: 1;
+      min-height: 100vh;
+      display: grid;
+      place-items: center;
+      padding: 24px;
+    }
+
+    .card {
+      width: min(720px, 92vw);
+      background: var(--card);
+      border: 1px solid var(--cardBorder);
+      backdrop-filter: blur(8px);
+      border-radius: 24px;
+      padding: 22px 18px 18px;
+      box-shadow: 0 18px 50px rgba(0,0,0,0.12);
+      text-align: center;
+    }
+
+    h1 {
+      margin: 0 0 14px;
+      font-size: clamp(26px, 3.8vw, 44px);
+      font-weight: 900;
+      letter-spacing: 0.5px;
+      color: var(--text);
+    }
+
+    .videoBox {
+      width: 100%;
+      display: grid;
+      place-items: center;
+      margin: 10px 0 18px;
+    }
+
+    video {
+      width: min(520px, 88vw);
+      height: auto;
+      border-radius: 18px;
+      border: 1px solid rgba(0,0,0,0.08);
+      box-shadow: 0 14px 34px rgba(0,0,0,0.18);
+      background: rgba(255,255,255,0.4);
+    }
+
+    .btnRow {
+      position: relative;
+      display: flex;
+      justify-content: center;
+      gap: 14px;
+      margin-top: 6px;
+      min-height: 62px;
+    }
+
+    button {
+      border: none;
+      border-radius: 999px;
+      padding: 14px 20px;
+      font-size: 16px;
+      font-weight: 800;
+      cursor: pointer;
+      transition: transform 0.15s ease, filter 0.15s ease;
+      color: #fff;
+      box-shadow: 0 10px 22px rgba(0,0,0,0.15);
+      outline: none;
+    }
+    button:active { transform: scale(0.98); }
+    .yes { background: var(--yes); }
+    .no  { background: var(--no); }
+
+    /* "No" floating mode (absolute positioning inside btnRow) */
+    .floaty {
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      transform: translate(-50%,-50%);
+    }
+
+    /* Celebration overlay */
+    .overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 10;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+      background: rgba(255, 230, 240, 0.92);
+      backdrop-filter: blur(8px);
+    }
+    .overlay.show { display: flex; }
+
+    .celebrateCard {
+      width: min(820px, 94vw);
+      background: rgba(255,255,255,0.75);
+      border: 1px solid rgba(0,0,0,0.08);
+      border-radius: 24px;
+      padding: 22px;
+      text-align: center;
+      box-shadow: 0 18px 55px rgba(0,0,0,0.18);
+    }
+
+    .celebrateTitle {
+      margin: 0 0 8px;
+      font-size: clamp(26px, 4.2vw, 52px);
+      font-weight: 900;
+      color: #111;
+    }
+    .celebrateText {
+      margin: 0 0 14px;
+      font-size: 18px;
+      font-weight: 700;
+      color: #111;
+    }
+
+    .usPhoto {
+      width: min(520px, 88vw);
+      height: auto;
+      border-radius: 18px;
+      border: 1px solid rgba(0,0,0,0.08);
+      box-shadow: 0 14px 34px rgba(0,0,0,0.18);
+      display: none; /* shown only if file loads */
+      margin: 10px auto 0;
+      background: rgba(255,255,255,0.4);
+    }
+
+    .hint {
+      font-size: 13px;
+      font-weight: 700;
+      opacity: 0.8;
+      margin-top: 8px;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="hearts" id="hearts"></div>
+
+  <div class="wrap">
+    <div class="card">
+      <h1>Will you be my Valentine? 💘</h1>
+
+      <div class="videoBox">
+        <!-- 5-second loop behavior is handled in JS so it always restarts at 0 every 5 seconds -->
+        <video id="valVideo" autoplay muted playsinline preload="auto">
+          <source src="valentine.mp4" type="video/mp4" />
+          Your browser can’t play this video.
+        </video>
+      </div>
+
+      <div class="btnRow" id="btnRow">
+        <button class="yes" id="yesBtn">Yes 💖</button>
+        <button class="no" id="noBtn">No 🙃</button>
+      </div>
+
+      <div class="hint">Tip: if video doesn’t show, make sure it’s named <b>valentine.mp4</b> and in this same folder.</div>
+    </div>
+  </div>
+
+  <!-- Celebration -->
+  <div class="overlay" id="overlay">
+    <div class="celebrateCard">
+      <h2 class="celebrateTitle">YAYYY!! 🎉💞</h2>
+      <p class="celebrateText">Okay it’s official… you’re my Valentine 😘🌹</p>
+
+      <!-- Put your couple photo in the folder and name it us.jpg (or change src below) -->
+      <img id="usPhoto" class="usPhoto" src="us.jpg" alt="Us" />
+
+      <p class="hint" id="photoHint">If the photo isn’t showing yet, that’s okay—add it later as <b>us.jpg</b>.</p>
+      <div style="margin-top:14px;">
+        <button class="yes" onclick="closeOverlay()">Aww 🥰</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // ---------- Hearts popping around ----------
+    const heartsLayer = document.getElementById("hearts");
+    const heartChars = ["💗","💖","💘","💕","💞","💓","💝"];
+
+    function spawnHeart() {
+      const h = document.createElement("div");
+      h.className = "heart";
+      h.textContent = heartChars[Math.floor(Math.random() * heartChars.length)];
+
+      const left = Math.random() * 100; // vw
+      const size = 14 + Math.random() * 22; // px
+      const drift = (Math.random() * 120 - 60).toFixed(0) + "px"; // left/right drift
+      const duration = 3.5 + Math.random() * 4.5; // sec
+
+      h.style.left = left + "vw";
+      h.style.fontSize = size + "px";
+      h.style.setProperty("--drift", drift);
+      h.style.animationDuration = duration + "s";
+
+      heartsLayer.appendChild(h);
+      setTimeout(() => h.remove(), duration * 1000);
+    }
+
+    // steady heart spawn rate
+    setInterval(spawnHeart, 180);
+
+    // ---------- Force 5-second video loop ----------
+    const vid = document.getElementById("valVideo");
+
+    vid.addEventListener("loadedmetadata", () => {
+      vid.play().catch(()=>{});
+      // restart every 5 seconds no matter what the file length is
+      setInterval(() => {
+        try {
+          vid.currentTime = 0;
+          vid.play().catch(()=>{});
+        } catch(e){}
+      }, 5000);
+    });
+
+    // ---------- Buttons logic ----------
+    const noBtn = document.getElementById("noBtn");
+    const yesBtn = document.getElementById("yesBtn");
+    const btnRow = document.getElementById("btnRow");
+
+    let noClicks = 0;
+    let floatMode = false;
+    let floatTimer = null;
+
+    function rand(min, max) {
+      return Math.random() * (max - min) + min;
+    }
+
+    function startFloatingNo() {
+      if (floatMode) return;
+      floatMode = true;
+      noBtn.classList.add("floaty");
+
+      // position it initially
+      moveNoButtonRandom();
+
+      // keep moving it around (floaty)
+      floatTimer = setInterval(moveNoButtonRandom, 800);
+    }
+
+    function moveNoButtonRandom() {
+      const rect = btnRow.getBoundingClientRect();
+      const btnRect = noBtn.getBoundingClientRect();
+
+      // keep it inside the btnRow bounds
+      const padding = 6;
+      const maxX = rect.width - btnRect.width - padding;
+      const maxY = rect.height - btnRect.height - padding;
+
+      const x = Math.max(padding, rand(padding, maxX));
+      const y = Math.max(padding, rand(padding, maxY));
+
+      noBtn.style.left = x + "px";
+      noBtn.style.top = y + "px";
+      noBtn.style.transform = "translate(0,0)";
+    }
+
+    noBtn.addEventListener("mouseenter", () => {
+      // once she's interacted a bit, it starts floating
+      if (noClicks >= 1) startFloatingNo();
+    });
+
+    noBtn.addEventListener("click", () => {
+      noClicks++;
+
+      // Make it float after first click (as requested: "eventually")
+      if (noClicks >= 1) startFloatingNo();
+
+      if (noClicks === 1) {
+        alert("Wait… why no? 🥺💔");
+      } else if (noClicks === 2) {
+        alert("C’monnn tell me whyyy 😭💕");
+      } else if (noClicks === 3) {
+        alert("This is breaking my heart fr 😔💘");
+      } else {
+        alert("Too late… you already tried 4 times 😌⏳");
+        // optionally disable it
+        noBtn.disabled = true;
+        noBtn.style.filter = "grayscale(0.4) opacity(0.85)";
+        if (floatTimer) clearInterval(floatTimer);
+      }
+    });
+
+    yesBtn.addEventListener("click", () => {
+      celebrate();
+    });
+
+    // ---------- Celebration ----------
+    const overlay = document.getElementById("overlay");
+    const usPhoto = document.getElementById("usPhoto");
+    const photoHint = document.getElementById("photoHint");
+
+    function celebrate() {
+      overlay.classList.add("show");
+
+      // mini confetti burst using hearts
+      for (let i = 0; i < 80; i++) setTimeout(spawnHeart, i * 12);
+
+      // If the image loads, show it; otherwise keep hint visible
+      usPhoto.onload = () => {
+        usPhoto.style.display = "block";
+        photoHint.style.display = "none";
+      };
+      usPhoto.onerror = () => {
+        usPhoto.style.display = "none";
+        photoHint.style.display = "block";
+      };
+    }
+
+    function closeOverlay() {
+      overlay.classList.remove("show");
+    }
+    window.closeOverlay = closeOverlay;
+  </script>
+</body>
 </html>
